@@ -1,0 +1,19 @@
+{
+  "name": "swhilibox-server-sided",
+  "version": "1.0.0",
+  "description": "A Simple Node Server Script",
+  "main": "index.js",
+  "dependencies": {
+    "body-parser": "^1.15.1",
+    "express": "^4.13.4",
+    "mongoose": "^4.4.19",
+    "morgan": "^1.7.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "firefly_coder",
+  "license": "ISC"
+}

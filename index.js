@@ -7,6 +7,7 @@ var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
 var path = require('path');
 var morgan = require('morgan');
+var methodOverride = require('method-override');
 
 //Connect to MongoDb.
 mongoose.connect('mongodb://localhost/test');
@@ -15,16 +16,16 @@ mongoose.connect('mongodb://localhost/test');
 var port = process.env.PORT || 3000;
 
 //Initialize the required Middleware.
+application.use(methodOverride());
+application.use(bodyParser.urlencoded({'extended' : 'false'}));
 application.use(morgan('dev'));
-application.use(express.static(path.join(__dirname, 'views')))
-var urlencodedParser = bodyParser.urlencoded({'extended' : 'false'});
+application.use(express.static(path.join(__dirname, 'views')));
 
 //Create a Schema model to hold your events data.
 var Events = mongoose.model('Events', {
 	title : String,
     venue : String,
     date : {type :Date,
-            //requires JQuery Mobile UI for calendar!! I,m working on it.
             default: Date.now
           },
     time : String,
@@ -32,27 +33,22 @@ var Events = mongoose.model('Events', {
         default : false}
 });
 
-//Index Home Page.
-application.get('/', function(request, response){
-    response.sendFile('index.html');
-});
-
 //Crud Page.
 application.get('/crud', function(request, response){
     response.sendFile('crud.html', {'root' : 'views'});
 });
 
-//Return all the events from the schema.
+//Return all the events from the collection.
 application.get('/events', function(request, response){
-	Events.find(function(error, events){
+	Events.find({}, function(error, events){
 		if(error)
 			response.send(error)
 		response.json(events)
 	});
 });
 
-//Insert events data into schema.
-application.post('/events', urlencodedParser, function(request, response){
+//Insert events data into collection.
+application.post('/insert', function(request, response){
     Events.create({title : request.body.title,
                    venue : request.body.venue,
                    date : request.body.date,
@@ -62,13 +58,47 @@ application.post('/events', urlencodedParser, function(request, response){
         function(error, events){
              if(error)
                 response.send(error)
-             Events.find(function(error, events){
+             Events.find({}, function(error, events){
                   if(error)
-                    response.send(error)
-                    response.json(events)
+                    response.send(error);
+                    response.redirect('crud.html');
              });
         });
 });
+
+//Deleting events data from collection.
+application.post('/delete', function(request, response){
+   Events.remove({ _id : request.body.id}, function(error, events){
+      if(error)
+        response.send(error)
+      Events.find({}, function(error, events){
+        if(error)
+          response.send(error);
+        response.redirect('crud.html');
+      });
+   });
+});
+
+//Updating events data in collection.
+application.post('/update', function(request, response){
+   var terms = {
+       title : request.body.title,
+       venue : request.body.venue,
+       date : request.body.date,
+       time : request.body.time
+       }
+  Events.update({_id : request.body.id}, {$set: terms}, function(error, events){
+     if(error)
+      response.send(error);
+    Events.find({}, function(error, events){
+      if(error)
+        response.send(error);
+      console.log(terms);
+      response.redirect('crud.html');
+    });
+  });
+});
+
 
 //Start the express HTTP Server.
 application.listen(port, function(){
